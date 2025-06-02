@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyFormationManager : MonoBehaviour
@@ -16,22 +16,28 @@ public class EnemyFormationManager : MonoBehaviour
 
     private List<Vector3[]> waveFormations = new List<Vector3[]>
     {
+        // Oleada 1: 10 enemigos tipo 1
         new Vector3[] {
-            new Vector3(-5, 0, 3), new Vector3(-3, 0, 3), new Vector3(-1, 0, 3), new Vector3(1, 0, 3), new Vector3(3, 0, 3), new Vector3(5, 0, 3),
-            new Vector3(-5, 0, 1), new Vector3(-3, 0, 1), new Vector3(-1, 0, 1), new Vector3(1, 0, 1), new Vector3(3, 0, 1), new Vector3(5, 0, 1),
+            new Vector3(-4, 0, 2), new Vector3(-2, 0, 2), new Vector3(0, 0, 2), new Vector3(2, 0, 2), new Vector3(4, 0, 2),
+            new Vector3(-4, 0, 0), new Vector3(-2, 0, 0), new Vector3(0, 0, 0), new Vector3(2, 0, 0), new Vector3(4, 0, 0),
         },
+
+        // Oleada 2: 5 enemigos tipo 1 (X) + 5 tipo 2 (círculo)
         new Vector3[] {
-            new Vector3(-4, 0, 2), new Vector3(-3, 0, 1), new Vector3(-2, 0, 0),
-            new Vector3(0, 0, -1),
-            new Vector3(2, 0, 0), new Vector3(3, 0, 1), new Vector3(4, 0, 2),
-            new Vector3(-1, 0, -2), new Vector3(1, 0, -2), new Vector3(0, 0, 1),
+            // X shape - tipo 1
+            new Vector3(-2, 0, 2), new Vector3(-1, 0, 1), new Vector3(0, 0, 0), new Vector3(1, 0, 1), new Vector3(2, 0, 2),
+            // Circle shape - tipo 2
+            new Vector3(0, 0, 3), new Vector3(2, 0, 1), new Vector3(1, 0, -1), new Vector3(-1, 0, -1), new Vector3(-2, 0, 1),
         },
+
+        // Oleada 3: 20 enemigos combinados
         new Vector3[] {
-            new Vector3(0, 0, 3),
-            new Vector3(-1, 0, 2), new Vector3(1, 0, 2),
-            new Vector3(-2, 0, 1), new Vector3(0, 0, 1), new Vector3(2, 0, 1),
-            new Vector3(-3, 0, 0), new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(3, 0, 0),
-            new Vector3(-2, 0, -1), new Vector3(0, 0, -1), new Vector3(2, 0, -1),
+            new Vector3(0, 0, 4),
+            new Vector3(-1, 0, 3), new Vector3(1, 0, 3),
+            new Vector3(-2, 0, 2), new Vector3(0, 0, 2), new Vector3(2, 0, 2),
+            new Vector3(-3, 0, 1), new Vector3(-1, 0, 1), new Vector3(1, 0, 1), new Vector3(3, 0, 1),
+            new Vector3(-4, 0, 0), new Vector3(-2, 0, 0), new Vector3(0, 0, 0), new Vector3(2, 0, 0), new Vector3(4, 0, 0),
+            new Vector3(-2, 0, -1), new Vector3(0, 0, -1), new Vector3(2, 0, -1), new Vector3(0, 0, -3),
         }
     };
 
@@ -75,15 +81,17 @@ public class EnemyFormationManager : MonoBehaviour
             Vector3 offset = new Vector3(relativePos.x * spacing, 0, relativePos.z * spacing);
             Vector3 spawnPos = transform.position + offset;
 
-            GameObject prefabToSpawn = enemyPrefab;
+            GameObject prefabToSpawn;
 
-            // Oleada 1: solo tipo 1, Oleada 2: alternar, Oleada 3: cada 3 enemigos es tipo 2
-            if (waveIndex == 1 && i % 2 == 1)
+            if (waveIndex == 1 && i >= 5) // Oleada 2: enemigos circulares son tipo 2
                 prefabToSpawn = enemy2Prefab;
-            else if (waveIndex == 2 && i % 3 == 0)
+            else if (waveIndex == 2 && i % 2 == 0) // Oleada 3: tipo 2 en posiciones pares
                 prefabToSpawn = enemy2Prefab;
+            else
+                prefabToSpawn = enemyPrefab;
 
             GameObject enemyObj = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+
             if (enemyObj.TryGetComponent<Enemy>(out Enemy e))
             {
                 e.SetFormationManager(this, offset);
@@ -92,16 +100,6 @@ public class EnemyFormationManager : MonoBehaviour
         }
 
         GameManager.instance.RegisterEnemies(enemies);
-
-        // Drop power-up al terminar oleada 2 (�ndice 1)
-        if (waveIndex == 1)
-        {
-            int dropIndex = formation.Length / 2;
-            Vector3 dropOffset = new Vector3(formation[dropIndex].x * spacing, 0, formation[dropIndex].z * spacing);
-            Vector3 dropPos = transform.position + dropOffset;
-
-            Instantiate(GameManager.instance.powerUpPrefab, dropPos + Vector3.up, Quaternion.identity);
-        }
     }
 
     public void ClearEnemies()
@@ -112,14 +110,5 @@ public class EnemyFormationManager : MonoBehaviour
                 Destroy(enemy.gameObject);
         }
         enemies.Clear();
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Wall"))
-        {
-            direction *= -1f;
-            transform.position += Vector3.back * descentStep;
-        }
     }
 }

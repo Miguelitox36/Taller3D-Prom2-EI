@@ -1,9 +1,11 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody), typeof(BoxCollider))]
 public abstract class Enemy : MonoBehaviour
 {
     public float speed = 3f;
+    public bool isPowerUpHolder = false;
+    public GameObject powerUpPrefab; // Agregado
+
     protected Transform player;
     private EnemyFormationManager formationManager;
     private Vector3 relativePosition;
@@ -18,8 +20,8 @@ public abstract class Enemy : MonoBehaviour
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
 
-        BoxCollider col = GetComponent<BoxCollider>();
-        col.isTrigger = false; // Necesitamos colisión sólida para OnTrigger en pared
+        CapsuleCollider col = GetComponent<CapsuleCollider>();
+        col.isTrigger = false;
     }
 
     public void SetFormationManager(EnemyFormationManager efm, Vector3 relPos)
@@ -42,9 +44,13 @@ public abstract class Enemy : MonoBehaviour
     {
         if (isRegistered && GameManager.instance != null)
             GameManager.instance.EnemyKilled(this);
+
+        if (isPowerUpHolder && powerUpPrefab != null)
+        {
+            Instantiate(powerUpPrefab, transform.position, Quaternion.identity);
+        }
     }
 
-    // Cambio: Usamos OnTriggerEnter para detectar la pared inferior
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Wall") && other.name.ToLower().Contains("bottom"))
@@ -53,4 +59,3 @@ public abstract class Enemy : MonoBehaviour
         }
     }
 }
-

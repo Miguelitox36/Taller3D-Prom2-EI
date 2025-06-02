@@ -211,8 +211,8 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 200, z: -10}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 100, z: -10}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -274,7 +274,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 6876858882335264128, guid: 734183ff7c58ad145b46af1cbb4485fe, type: 3}
-  offset: {x: 0, y: 200, z: 3.5}
+  offset: {x: 0, y: 100, z: 3.5}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -364,7 +364,7 @@ Transform:
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: -3.1999998, y: 3, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -436,7 +436,7 @@ Transform:
   m_GameObject: {fileID: 832575517}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -3.1999998, y: 0, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -475,11 +475,12 @@ MonoBehaviour:
     type: 3}
   enemyPrefab: {fileID: 7467688996072102708, guid: 802ed83373c9dcd47a4e3c031c67e0c2,
     type: 3}
+  enemy2Prefab: {fileID: 7297196728703985509, guid: aacb6570890fa08499594031c2132c4e,
+    type: 3}
   tilePrefab: {fileID: 5922464379804069184, guid: b2c6a9838e82d5f4e82fb99007592c3b,
     type: 3}
   wallPrefab: {fileID: 3687191250630510899, guid: 0cf352f774cec914e8b6b17ab1e2dc3a,
     type: 3}
-  powerUpPrefab: {fileID: 0}
   level: 1
 --- !u!4 &1493013365
 Transform:
