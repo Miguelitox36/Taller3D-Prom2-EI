@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
@@ -35,11 +33,20 @@ public class PlayerShooting : MonoBehaviour
     void InstantiateBullet(Vector3 dir)
     {
         GameObject bullet = Instantiate(bulletPrefab, shootPoint.position, Quaternion.identity);
-        bullet.GetComponent<Rigidbody>().velocity = dir * bulletSpeed;
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = dir * bulletSpeed;
+        }
+        else
+        {
+            Debug.LogWarning("La bala no tiene un Rigidbody. La velocidad no se aplicará.");
+        }
     }
 
     public void EnableTripleShot()
     {
         tripleShotEnabled = true;
+        Debug.Log("¡Disparo triple activado!");
     }
 }

@@ -3,14 +3,12 @@
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    public GameObject bulletPrefab;
-    public Transform firePoint;
 
     private float limitX, limitZ;
 
     private void Start()
     {
-        transform.position = new Vector3(0, 0.6f, -3);
+        transform.position = new Vector3(0, 0.6f, -10);
 
         int size = GameManager.instance.GetMapSize();
         limitX = (size + 1) - 1f;
@@ -20,9 +18,6 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         Move();
-
-        if (Input.GetKeyDown(KeyCode.Space))
-            Shoot();
     }
 
     void Move()
@@ -37,11 +32,5 @@ public class PlayerController : MonoBehaviour
         newPos.z = Mathf.Clamp(newPos.z, -limitZ, limitZ);
 
         transform.position = newPos;
-    }
-
-    void Shoot()
-    {
-        if (firePoint != null)
-            Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
     }
 }

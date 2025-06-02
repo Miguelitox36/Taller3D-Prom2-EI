@@ -7,9 +7,9 @@ public class GameManager : MonoBehaviour
 
     public GameObject playerPrefab;
     public GameObject enemyPrefab;
+    public GameObject enemy2Prefab;
     public GameObject tilePrefab;
     public GameObject wallPrefab;
-    public GameObject powerUpPrefab;
 
     public int level = 1;
     private int enemiesRemaining;
@@ -20,9 +20,12 @@ public class GameManager : MonoBehaviour
 
     private List<int> waveOrder = new List<int>();
     private int currentWaveIndex = 0;
+
     private EnemyFormationManager efm;
 
     private HashSet<Enemy> aliveEnemies = new HashSet<Enemy>();
+
+    private int enemyType2KilledInWave2 = 0;
 
     private void Awake()
     {
@@ -37,7 +40,7 @@ public class GameManager : MonoBehaviour
 
     void StartLevel()
     {
-        mapSize = 10 + level * 2;
+        mapSize = 15 + level * 2;
 
         if (!mapGenerated)
         {
@@ -47,6 +50,7 @@ public class GameManager : MonoBehaviour
 
         SpawnPlayer();
         SetupEnemyWaves();
+        enemyType2KilledInWave2 = 0;
     }
 
     public int GetMapSize() => mapSize;
@@ -62,29 +66,28 @@ public class GameManager : MonoBehaviour
         float wallZ = 0;
 
         GameObject leftWall = Instantiate(wallPrefab, new Vector3(-wallOffset, wallHeight / 2f, wallZ), Quaternion.identity);
-        leftWall.name = "LeftWall";
         GameObject rightWall = Instantiate(wallPrefab, new Vector3(wallOffset, wallHeight / 2f, wallZ), Quaternion.identity);
-        rightWall.name = "RightWall";
         GameObject topWall = Instantiate(wallPrefab, new Vector3(0, wallHeight / 2f, wallOffset), Quaternion.identity);
-        topWall.name = "TopWall";
         GameObject bottomWall = Instantiate(wallPrefab, new Vector3(0, wallHeight / 2f, -wallOffset), Quaternion.identity);
+
+        leftWall.name = "LeftWall";
+        rightWall.name = "RightWall";
+        topWall.name = "TopWall";
         bottomWall.name = "BottomWall";
-        bottomWall.transform.localScale = new Vector3((size + 1) * 2, wallHeight, 5f);
-        bottomWall.tag = "Wall";
-        bottomWall.GetComponent<BoxCollider>().isTrigger = true;
 
         leftWall.transform.localScale = new Vector3(1f, wallHeight, (size + 1) * 5);
         rightWall.transform.localScale = new Vector3(1f, wallHeight, (size + 1) * 5);
         topWall.transform.localScale = new Vector3((size + 1) * 2, wallHeight, 5f);
         bottomWall.transform.localScale = new Vector3((size + 1) * 2, wallHeight, 5f);
 
-        // Añadir tag "Wall" a todos
         leftWall.tag = rightWall.tag = topWall.tag = bottomWall.tag = "Wall";
+
+        bottomWall.GetComponent<BoxCollider>().isTrigger = true;
     }
 
     void SpawnPlayer()
     {
-        Vector3 startPos = new Vector3(0, 0.6f, -mapSize / 2f + 5);
+        Vector3 startPos = new Vector3(0, 0.6f, -10);
         if (player == null)
         {
             GameObject newPlayer = Instantiate(playerPrefab, startPos, Quaternion.identity);
@@ -109,6 +112,7 @@ public class GameManager : MonoBehaviour
             formationManagerGO.transform.position = new Vector3(0, 0.6f, mapSize - 3);
             efm = formationManagerGO.AddComponent<EnemyFormationManager>();
             efm.enemyPrefab = enemyPrefab;
+            efm.enemy2Prefab = enemy2Prefab;
 
             var collider = formationManagerGO.AddComponent<BoxCollider>();
             collider.size = new Vector3(mapSize * 2f, 1f, 1f);
@@ -130,6 +134,11 @@ public class GameManager : MonoBehaviour
             int waveId = waveOrder[currentWaveIndex];
             currentWaveIndex++;
             efm.SpawnWave(waveId);
+
+            if (waveId == 1) // Segunda oleada (índice 1)
+            {
+                enemyType2KilledInWave2 = 0;
+            }
         }
         else
         {
@@ -154,6 +163,19 @@ public class GameManager : MonoBehaviour
         {
             aliveEnemies.Remove(enemy);
             enemiesRemaining = Mathf.Max(0, enemiesRemaining - 1);
+
+            if (currentWaveIndex == 2 && enemy is EnemyType2)
+            {
+                enemyType2KilledInWave2++;
+                if (enemyType2KilledInWave2 == 4)
+                {
+                    if (enemy.powerUpPrefab != null)
+                    {
+                        Instantiate(enemy.powerUpPrefab, enemy.transform.position + Vector3.up, Quaternion.identity);
+                    }
+                }
+            }
+
             if (enemiesRemaining <= 0)
             {
                 Invoke(nameof(SpawnNextWave), 2f);
