@@ -26,11 +26,18 @@ public class GameManager : MonoBehaviour
     private HashSet<Enemy> aliveEnemies = new HashSet<Enemy>();
 
     private int enemyType2KilledInWave2 = 0;
+    private bool powerUpDropped = false;
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     void Start()
@@ -40,7 +47,7 @@ public class GameManager : MonoBehaviour
 
     void StartLevel()
     {
-        mapSize = 15 + level * 2;
+        mapSize = 20 + level * 3;
 
         if (!mapGenerated)
         {
@@ -50,17 +57,17 @@ public class GameManager : MonoBehaviour
 
         SpawnPlayer();
         SetupEnemyWaves();
-        enemyType2KilledInWave2 = 0;
     }
 
     public int GetMapSize() => mapSize;
 
     void GenerateMap(int size)
     {
+        
         GameObject tile = Instantiate(tilePrefab, new Vector3(0, -2f, 0), Quaternion.identity);
         tile.tag = "Tile";
         tile.transform.localScale = new Vector3((size + 1) * 2, 1f, (size + 1) * 2);
-
+                
         float wallHeight = 5f;
         float wallOffset = (size + 1);
         float wallZ = 0;
@@ -80,19 +87,26 @@ public class GameManager : MonoBehaviour
         topWall.transform.localScale = new Vector3((size + 1) * 2, wallHeight, 5f);
         bottomWall.transform.localScale = new Vector3((size + 1) * 2, wallHeight, 5f);
 
-        leftWall.tag = rightWall.tag = topWall.tag = bottomWall.tag = "Wall";
-
-        bottomWall.GetComponent<BoxCollider>().isTrigger = true;
+        leftWall.tag = rightWall.tag = topWall.tag = "Wall";
+        bottomWall.tag = "BottomWall";
+                
+        BoxCollider bc = bottomWall.GetComponent<BoxCollider>();
+        if (bc == null) bc = bottomWall.AddComponent<BoxCollider>();
+        bc.isTrigger = true;
     }
 
     void SpawnPlayer()
     {
-        Vector3 startPos = new Vector3(0, 0.6f, -10);
+        Vector3 startPos = new Vector3(0, 0.6f, -mapSize + 5);
         if (player == null)
         {
             GameObject newPlayer = Instantiate(playerPrefab, startPos, Quaternion.identity);
             player = newPlayer.transform;
-            Camera.main.GetComponent<CameraFollow>()?.SetTarget(player);
+            CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
+            if (camFollow != null)
+            {
+                camFollow.SetTarget(player);
+            }
         }
         else
         {
@@ -109,18 +123,10 @@ public class GameManager : MonoBehaviour
         if (efm == null)
         {
             GameObject formationManagerGO = new GameObject("EnemyFormationManager");
-            formationManagerGO.transform.position = new Vector3(0, 0.6f, mapSize - 3);
+            formationManagerGO.transform.position = new Vector3(0, 0.6f, mapSize - 5);
             efm = formationManagerGO.AddComponent<EnemyFormationManager>();
             efm.enemyPrefab = enemyPrefab;
             efm.enemy2Prefab = enemy2Prefab;
-
-            var collider = formationManagerGO.AddComponent<BoxCollider>();
-            collider.size = new Vector3(mapSize * 2f, 1f, 1f);
-            collider.isTrigger = false;
-
-            var rb = formationManagerGO.AddComponent<Rigidbody>();
-            rb.useGravity = false;
-            rb.constraints = RigidbodyConstraints.FreezeAll;
         }
 
         SpawnNextWave();
@@ -130,19 +136,22 @@ public class GameManager : MonoBehaviour
     {
         if (currentWaveIndex < waveOrder.Count)
         {
-            efm.transform.position = new Vector3(0, 0.6f, mapSize - 3);
+            efm.transform.position = new Vector3(0, 0.6f, mapSize - 5);
             int waveId = waveOrder[currentWaveIndex];
             currentWaveIndex++;
             efm.SpawnWave(waveId);
-
-            if (waveId == 1) // Segunda oleada (índice 1)
+                        
+            if (waveId == 1)
             {
                 enemyType2KilledInWave2 = 0;
+                powerUpDropped = false;
             }
+
+            Debug.Log($"Spawneando oleada {waveId + 1} de {waveOrder.Count}");
         }
         else
         {
-            GameOver();
+            GameWon();
         }
     }
 
@@ -151,40 +160,85 @@ public class GameManager : MonoBehaviour
         aliveEnemies.Clear();
         foreach (Enemy e in enemyList)
         {
-            if (e != null)
+            if (e != null && e.gameObject != null)
+            {
                 aliveEnemies.Add(e);
+            }
         }
         enemiesRemaining = aliveEnemies.Count;
+        Debug.Log($"Oleada iniciada con {enemiesRemaining} enemigos");
     }
 
     public void EnemyKilled(Enemy enemy)
     {
+        if (enemy == null) return;
+
         if (aliveEnemies.Contains(enemy))
         {
             aliveEnemies.Remove(enemy);
             enemiesRemaining = Mathf.Max(0, enemiesRemaining - 1);
-
-            if (currentWaveIndex == 2 && enemy is EnemyType2)
+                        
+            if (currentWaveIndex == 2 && enemy is EnemyType2 && !powerUpDropped)
             {
                 enemyType2KilledInWave2++;
-                if (enemyType2KilledInWave2 == 4)
+                Debug.Log($"EnemyType2 eliminado: {enemyType2KilledInWave2}/4");
+
+                if (enemyType2KilledInWave2 == 4 && enemy.powerUpPrefab != null)
                 {
-                    if (enemy.powerUpPrefab != null)
-                    {
-                        Instantiate(enemy.powerUpPrefab, enemy.transform.position + Vector3.up, Quaternion.identity);
-                    }
+                    
+                    Vector3 powerUpPos = enemy.transform.position;
+                    powerUpPos.y = 2f; 
+                    Instantiate(enemy.powerUpPrefab, powerUpPos, Quaternion.identity);
+                    powerUpDropped = true;
+                    Debug.Log("¡PowerUp generado en posición: " + powerUpPos);
                 }
             }
 
+            Debug.Log($"Enemigo eliminado. Quedan: {enemiesRemaining}");
+
             if (enemiesRemaining <= 0)
             {
+                Debug.Log("Oleada completada. Siguiente oleada en 2 segundos...");
                 Invoke(nameof(SpawnNextWave), 2f);
             }
         }
     }
 
+    public void EnemyReachedBottom(Enemy enemy)
+    {
+        if (enemy == null) return;
+
+        if (aliveEnemies.Contains(enemy))
+        {
+            aliveEnemies.Remove(enemy);
+            Destroy(enemy.gameObject);
+
+            enemiesRemaining = Mathf.Max(0, enemiesRemaining - 1);
+            Debug.Log($"Enemigo llegó al fondo y fue destruido. Quedan: {enemiesRemaining}");
+
+            if (enemiesRemaining <= 0)
+            {
+                Debug.Log("Todos los enemigos llegaron al fondo. Siguiente oleada en 2 segundos...");
+                Invoke(nameof(SpawnNextWave), 2f);
+            }
+        }
+    }
+
+    public void AllEnemiesReachedBottom()
+    {
+        Debug.Log("Toda la formación llegó al fondo. Pasando a la siguiente oleada...");
+        enemiesRemaining = 0;
+        aliveEnemies.Clear();
+        Invoke(nameof(SpawnNextWave), 1f);
+    }
+
+    void GameWon()
+    {
+        Debug.Log("¡Felicitaciones! ¡Has completado todas las oleadas y ganaste el juego!");        
+    }
+
     void GameOver()
     {
-        Debug.Log("¡Ganaste el juego!");
+        Debug.Log("Game Over! Los enemigos han llegado al jugador.");        
     }
 }
