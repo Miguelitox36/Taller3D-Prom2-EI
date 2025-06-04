@@ -11,6 +11,7 @@ TagManager:
   - Tile
   - Wall
   - PowerUp
+  - BottomWall
   layers:
   - Default
   - TransparentFX
