@@ -8,11 +8,12 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        transform.position = new Vector3(0, 0.6f, -10);
-
         int size = GameManager.instance.GetMapSize();
-        limitX = (size + 1) - 1f;
-        limitZ = (size + 1) - 1f;
+                
+        transform.position = new Vector3(0, 0.6f, -size + 5);                
+        limitX = (size + 1) - 2f; 
+        limitZ = (size + 1) - 2f; 
+        Debug.Log($"Player spawned. Limits: X=±{limitX}, Z=±{limitZ}");
     }
 
     private void Update()
@@ -27,7 +28,7 @@ public class PlayerController : MonoBehaviour
 
         Vector3 moveDir = new Vector3(moveX, 0f, moveZ).normalized;
         Vector3 newPos = transform.position + moveDir * moveSpeed * Time.deltaTime;
-
+                
         newPos.x = Mathf.Clamp(newPos.x, -limitX, limitX);
         newPos.z = Mathf.Clamp(newPos.z, -limitZ, limitZ);
 

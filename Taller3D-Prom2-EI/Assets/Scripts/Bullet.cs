@@ -22,13 +22,20 @@ public class Bullet : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             Enemy enemy = other.GetComponent<Enemy>();
-            if (enemy != null)
+            if (enemy != null && GameManager.instance != null)
             {
                 GameManager.instance.EnemyKilled(enemy);
             }
+                       
+            if (other.gameObject != null)
+            {
+                Destroy(other.gameObject);
+            }
 
-            Destroy(other.gameObject);
-            Destroy(gameObject);
+            if (gameObject != null)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }

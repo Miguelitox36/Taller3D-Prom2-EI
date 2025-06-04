@@ -1,61 +1,69 @@
 using UnityEngine;
 
-public abstract class Enemy : MonoBehaviour
+public class Enemy : MonoBehaviour
 {
-    public float speed = 3f;
-    public bool isPowerUpHolder = false;
-    public GameObject powerUpPrefab; // Agregado
+    protected Vector3 relativePosition;
+    public GameObject powerUpPrefab;
+    protected EnemyFormationManager formationManager;
 
-    protected Transform player;
-    private EnemyFormationManager formationManager;
-    private Vector3 relativePosition;
-    private bool isRegistered = false;
-
-    protected virtual void Start()
+    public void SetRelativePosition(Vector3 relative)
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        isRegistered = true;
-
-        Rigidbody rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
-        rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-
-        CapsuleCollider col = GetComponent<CapsuleCollider>();
-        col.isTrigger = false;
+        relativePosition = relative;
     }
 
-    public void SetFormationManager(EnemyFormationManager efm, Vector3 relPos)
+    public void SetFormationManager(EnemyFormationManager manager, Vector3 relative)
     {
-        formationManager = efm;
-        relativePosition = relPos;
+        formationManager = manager;
+        SetRelativePosition(relative);
     }
 
     public void UpdateRelativePosition()
     {
-        if (formationManager != null)
-            transform.position = formationManager.transform.position + relativePosition;
-    }
-
-    protected abstract void Move();
-
-    protected virtual void Update() { }
-
-    private void OnDestroy()
-    {
-        if (isRegistered && GameManager.instance != null)
-            GameManager.instance.EnemyKilled(this);
-
-        if (isPowerUpHolder && powerUpPrefab != null)
+        if (this != null && transform != null)
         {
-            Instantiate(powerUpPrefab, transform.position, Quaternion.identity);
+            transform.localPosition = relativePosition;
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    void Update()
     {
-        if (other.CompareTag("Wall") && other.name.ToLower().Contains("bottom"))
+        Move();
+    }
+
+    protected virtual void Move()
+    {
+        
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.collider.CompareTag("Wall"))
+        {            
+            Vector3 incomingVector = transform.forward;
+            Vector3 reflectionVector = Vector3.Reflect(incomingVector, collision.contacts[0].normal);
+                        
+            transform.rotation = Quaternion.LookRotation(reflectionVector);
+                        
+            transform.position += reflectionVector * 0.1f;
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("BottomWall"))
         {
-            Destroy(gameObject);
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.EnemyReachedBottom(this);
+            }
+        }
+    }
+
+    void OnDestroy()
+    {       
+        if (formationManager != null)
+        {
+            formationManager.RemoveEnemy(this);
         }
     }
 }
